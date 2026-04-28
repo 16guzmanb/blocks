@@ -18,6 +18,7 @@
         }
 
         h1 { text-transform: uppercase; letter-spacing: 2px; }
+        h3 { margin: 0 0 8px 0; }
 
         .nav-buttons { margin-bottom: 20px; }
 
@@ -35,9 +36,16 @@
 
         button:hover { background-color: #ff00ff; color: #000; }
 
+        /* Highlighted / selected state for any button */
+        button.active {
+            background-color: #ff00ff;
+            color: #000;
+            box-shadow: 0 0 12px #ff00ff, 0 0 4px #ff00ff inset;
+        }
+
         /* Container Layouts */
         .mode-container {
-            display: none; /* Hidden by default, toggled via JS */
+            display: none;
             width: 100%;
             max-width: 1200px;
             gap: 20px;
@@ -46,11 +54,19 @@
 
         .active-mode { display: flex; }
 
-        /* Draw Mode Specifics */
-        .canvas-area { position: relative; width: 300px; height: 500px; border: 2px dashed #ff00ff; }
-        canvas { position: absolute; top: 0; left: 0; z-index: 1; cursor: crosshair; }
-        .outline-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        
+        /* Draw Mode */
+        .canvas-area {
+            width: 300px;
+            height: 500px;
+            border: 2px dashed #ff00ff;
+            flex-shrink: 0;
+        }
+
+        canvas {
+            display: block;
+            cursor: crosshair;
+        }
+
         .tools-panel, .parts-panel {
             background: #1e1e1e;
             padding: 15px;
@@ -60,10 +76,25 @@
             gap: 10px;
         }
 
+        .parts-panel button,
+        .tools-panel button {
+            margin: 0;
+        }
+
         .palette { display: flex; gap: 5px; flex-wrap: wrap; width: 120px; }
-        .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #000; }
-        
-        /* Build Mode Specifics */
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #333;
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        .color-swatch:hover   { transform: scale(1.15); }
+        .color-swatch.active  { border-color: #fff; transform: scale(1.2); box-shadow: 0 0 6px #fff; }
+
+        /* Build Mode */
         .library, .shape-blocks {
             background: #1e1e1e;
             padding: 15px;
@@ -89,7 +120,7 @@
             width: 100px;
             height: auto;
             cursor: grab;
-            position: absolute; /* Allows dropping anywhere */
+            position: absolute;
         }
 
         img { max-width: 100%; height: auto; }
@@ -98,218 +129,321 @@
 <body>
 
     <h1>Character Maker</h1>
-    
+
     <div class="nav-buttons">
         <button onclick="switchMode('draw')">Draw Mode</button>
         <button onclick="switchMode('build')">Build Mode</button>
     </div>
 
+    <!-- ═══════════════════ DRAW MODE ═══════════════════ -->
     <div id="draw-mode" class="mode-container active-mode">
+
         <div class="parts-panel">
             <h3>Select Part</h3>
-            <button onclick="loadPart('block (1).png', 'block (2).png')">Head</button>
-            <button onclick="loadPart('block (3).png', 'block (4).png')">Left Arm</button>
-            <button onclick="loadPart('block (5).png', 'block (6).png')">Right Arm</button>
-            <button onclick="loadPart('block (7).png', 'block (8).png')">Legs</button>
-            <button onclick="loadPart('block (9).png', 'block (10).png')">Torso</button>
+            <!-- data-index matches the parts[] array below -->
+            <button class="part-btn active" data-index="0" onclick="selectPart(0)">Head</button>
+            <button class="part-btn"        data-index="1" onclick="selectPart(1)">Left Arm</button>
+            <button class="part-btn"        data-index="2" onclick="selectPart(2)">Right Arm</button>
+            <button class="part-btn"        data-index="3" onclick="selectPart(3)">Legs</button>
+            <button class="part-btn"        data-index="4" onclick="selectPart(4)">Torso</button>
         </div>
 
+        <!-- Single display canvas — all parts composited here -->
         <div class="canvas-area">
             <canvas id="drawingCanvas" width="300" height="500"></canvas>
-            <img id="outlineLayer" class="outline-overlay" src="block (2).png" alt="">
         </div>
 
         <div class="tools-panel">
             <h3>Tools</h3>
-            <button onclick="setTool('draw')">Brush</button>
-            <button onclick="setTool('fill')">Paint Bucket</button>
-            
+            <button class="tool-btn active" data-tool="draw" onclick="setTool('draw')">Brush</button>
+            <button class="tool-btn"        data-tool="fill" onclick="setTool('fill')">Paint Bucket</button>
+
             <h3>Palette</h3>
             <div class="palette">
-                <div class="color-swatch" style="background: #ff00ff;" onclick="setColor('#ff00ff')"></div>
-                <div class="color-swatch" style="background: #00ffff;" onclick="setColor('#00ffff')"></div>
-                <div class="color-swatch" style="background: #ff0000;" onclick="setColor('#ff0000')"></div>
-                <div class="color-swatch" style="background: #00ff00;" onclick="setColor('#00ff00')"></div>
-                <div class="color-swatch" style="background: #ffffff;" onclick="setColor('#ffffff')"></div>
-                <div class="color-swatch" style="background: #000000;" onclick="setColor('#000000')"></div>
+                <div class="color-swatch active" style="background:#ff00ff;" onclick="setColor('#ff00ff',this)"></div>
+                <div class="color-swatch"        style="background:#00ffff;" onclick="setColor('#00ffff',this)"></div>
+                <div class="color-swatch"        style="background:#ff0000;" onclick="setColor('#ff0000',this)"></div>
+                <div class="color-swatch"        style="background:#00ff00;" onclick="setColor('#00ff00',this)"></div>
+                <div class="color-swatch"        style="background:#ffff00;" onclick="setColor('#ffff00',this)"></div>
+                <div class="color-swatch"        style="background:#ff8800;" onclick="setColor('#ff8800',this)"></div>
+                <div class="color-swatch"        style="background:#8800ff;" onclick="setColor('#8800ff',this)"></div>
+                <div class="color-swatch"        style="background:#ffffff;" onclick="setColor('#ffffff',this)"></div>
+                <div class="color-swatch"        style="background:#888888;" onclick="setColor('#888888',this)"></div>
+                <div class="color-swatch"        style="background:#000000; border-color:#444;" onclick="setColor('#000000',this)"></div>
             </div>
-            
-            <button onclick="saveCustomPart()" style="margin-top: 20px;">Save to Library</button>
+
+            <button onclick="saveCustomPart()" style="margin-top:20px;">Save to Library</button>
         </div>
     </div>
 
+    <!-- ═══════════════════ BUILD MODE ═══════════════════ -->
     <div id="build-mode" class="mode-container">
         <div class="library" id="saved-library">
             <h3>Your Library</h3>
-            </div>
+        </div>
 
         <div class="play-area" id="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
-            </div>
+        </div>
 
         <div class="shape-blocks" id="raw-blocks">
-            <h3>Blocks & Hats</h3>
-            <img src="block (1).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw1">
-            <img src="block (9).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw9">
+            <h3>Blocks &amp; Hats</h3>
+            <img src="block (1).png"  class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw1">
+            <img src="block (9).png"  class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw9">
             <img src="block (11).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw11">
-            <div class="draggable-item" draggable="true" ondragstart="drag(event)" id="fedora" style="font-size: 40px; text-align:center;">🎩</div>
-            
-            <button onclick="yeetAll()" style="margin-top: auto; border-color: red; color: red;">Yeet Reset</button>
+            <div class="draggable-item" draggable="true" ondragstart="drag(event)" id="fedora"
+                 style="font-size:40px;text-align:center;">🎩</div>
+
+            <button onclick="yeetAll()" style="margin-top:auto;border-color:red;color:red;">Yeet Reset</button>
         </div>
     </div>
 
     <script>
-        // --- System Logic & State ---
-        let currentTool = 'draw';
-        let currentColor = '#ff00ff';
-        let isDrawing = false;
-        
-        const canvas = document.getElementById('drawingCanvas');
-        const ctx = canvas.getContext('2d');
-        const outlineLayer = document.getElementById('outlineLayer');
+    /* ─────────────────────────────────────────────────────────
+       CONSTANTS & STATE
+    ───────────────────────────────────────────────────────── */
+    const CANVAS_W = 300, CANVAS_H = 500;
 
-        // --- View Switching ---
-        function switchMode(mode) {
-            document.getElementById('draw-mode').classList.remove('active-mode');
-            document.getElementById('build-mode').classList.remove('active-mode');
-            document.getElementById(`${mode}-mode`).classList.add('active-mode');
-            if(mode === 'build') loadLibrary();
-        }
+    // Parts: odd = blank/mask template, even = outline overlay
+    const parts = [
+        { name: 'Head',      blank: 'block (1).png',  outline: 'block (2).png'  },
+        { name: 'Left Arm',  blank: 'block (3).png',  outline: 'block (4).png'  },
+        { name: 'Right Arm', blank: 'block (5).png',  outline: 'block (6).png'  },
+        { name: 'Legs',      blank: 'block (7).png',  outline: 'block (8).png'  },
+        { name: 'Torso',     blank: 'block (9).png',  outline: 'block (10).png' },
+    ];
 
-        // --- Draw Mode Logic ---
-        function loadPart(blankSrc, outlineSrc) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            let img = new Image();
-            img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
-            img.src = blankSrc;
-            outlineLayer.src = outlineSrc;
-        }
+    // One offscreen canvas per part — holds the painted pixels for that part
+    const partCanvases = parts.map(() => {
+        const c = document.createElement('canvas');
+        c.width = CANVAS_W;
+        c.height = CANVAS_H;
+        return c;
+    });
 
-        function setTool(tool) { currentTool = tool; }
-        function setColor(color) { currentColor = color; }
+    let blankImages   = [];   // loaded Image objects for masks   (odd PNGs)
+    let outlineImages = [];   // loaded Image objects for outlines (even PNGs)
 
-        canvas.addEventListener('mousedown', (e) => {
-            isDrawing = true;
-            if (currentTool === 'fill') {
-                // Simplified Fill: Fills entire canvas context for now. 
-                // A true pixel-perfect flood fill requires a heavy algorithm processing ImageData.
-                ctx.fillStyle = currentColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                isDrawing = false;
-            } else {
-                ctx.beginPath();
-                ctx.moveTo(e.offsetX, e.offsetY);
-            }
+    let currentPartIndex = 0;
+    let currentTool  = 'draw';
+    let currentColor = '#ff00ff';
+    let isDrawing    = false;
+    let lastX = 0, lastY = 0;
+
+    const displayCanvas = document.getElementById('drawingCanvas');
+    const displayCtx    = displayCanvas.getContext('2d');
+
+    /* ─────────────────────────────────────────────────────────
+       IMAGE LOADING & INIT
+    ───────────────────────────────────────────────────────── */
+    function loadImage(src) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload  = () => resolve(img);
+            img.onerror = () => resolve(null);   // graceful — missing files won't crash
+            img.src = src;
+        });
+    }
+
+    async function init() {
+        [blankImages, outlineImages] = await Promise.all([
+            Promise.all(parts.map(p => loadImage(p.blank))),
+            Promise.all(parts.map(p => loadImage(p.outline)))
+        ]);
+
+        // Paint each part's blank template onto its offscreen canvas.
+        // source-atop later will clip drawing to these pixels.
+        parts.forEach((_, i) => {
+            if (!blankImages[i]) return;
+            const pCtx = partCanvases[i].getContext('2d');
+            pCtx.drawImage(blankImages[i], 0, 0, CANVAS_W, CANVAS_H);
         });
 
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDrawing && currentTool === 'draw') {
-                ctx.lineTo(e.offsetX, e.offsetY);
-                ctx.strokeStyle = currentColor;
-                ctx.lineWidth = 5;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-            }
+        renderAll();
+
+        // Restore build state if present
+        const saved = localStorage.getItem('buildState');
+        if (saved) document.getElementById('drop-zone').innerHTML = saved;
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       RENDERING — composites ALL parts + ALL outlines onto
+       the single visible canvas every time something changes.
+    ───────────────────────────────────────────────────────── */
+    function renderAll() {
+        displayCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+
+        // 1. Draw every part's painting layer (bottom → top)
+        partCanvases.forEach(pc => displayCtx.drawImage(pc, 0, 0));
+
+        // 2. Draw every outline on top (keeps linework crisp over the colour)
+        outlineImages.forEach(img => {
+            if (img) displayCtx.drawImage(img, 0, 0, CANVAS_W, CANVAS_H);
         });
+    }
 
-        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+    /* ─────────────────────────────────────────────────────────
+       PART / TOOL / COLOUR SELECTION
+    ───────────────────────────────────────────────────────── */
+    function selectPart(index) {
+        currentPartIndex = index;
+        document.querySelectorAll('.part-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+    }
 
-        // --- Persistence & Library (Local Storage) ---
-        function saveCustomPart() {
-            // Merges the drawn canvas with the outline image to save as one cohesive part
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tCtx = tempCanvas.getContext('2d');
-            
-            tCtx.drawImage(canvas, 0, 0);
-            tCtx.drawImage(outlineLayer, 0, 0, canvas.width, canvas.height);
-            
-            const dataUrl = tempCanvas.toDataURL('image/png');
-            let savedParts = JSON.parse(localStorage.getItem('savedParts')) || [];
-            savedParts.push(dataUrl);
-            localStorage.setItem('savedParts', JSON.stringify(savedParts));
-            alert('Saved to Library!');
+    function setTool(tool) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tool === tool);
+        });
+    }
+
+    function setColor(color, el) {
+        currentColor = color;
+        document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+        if (el) el.classList.add('active');
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       DRAWING — all ops use source-atop so pixels are only
+       placed where the blank template already has opaque pixels.
+       This keeps drawing/fill inside the mask shape.
+    ───────────────────────────────────────────────────────── */
+    displayCanvas.addEventListener('mousedown', (e) => {
+        isDrawing = true;
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+
+        if (currentTool === 'fill') {
+            const pCtx = partCanvases[currentPartIndex].getContext('2d');
+            pCtx.save();
+            pCtx.globalCompositeOperation = 'source-atop'; // clipped to mask shape
+            pCtx.fillStyle = currentColor;
+            pCtx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            pCtx.restore();
+            renderAll();
+            isDrawing = false;
+        }
+    });
+
+    displayCanvas.addEventListener('mousemove', (e) => {
+        if (!isDrawing || currentTool !== 'draw') return;
+
+        const pCtx = partCanvases[currentPartIndex].getContext('2d');
+        pCtx.save();
+        pCtx.globalCompositeOperation = 'source-atop'; // clipped to mask shape
+        pCtx.strokeStyle = currentColor;
+        pCtx.lineWidth   = 5;
+        pCtx.lineCap     = 'round';
+        pCtx.lineJoin    = 'round';
+        pCtx.beginPath();
+        pCtx.moveTo(lastX, lastY);
+        pCtx.lineTo(e.offsetX, e.offsetY);
+        pCtx.stroke();
+        pCtx.restore();
+
+        lastX = e.offsetX;
+        lastY = e.offsetY;
+        renderAll();
+    });
+
+    displayCanvas.addEventListener('mouseup',    () => { isDrawing = false; });
+    displayCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
+
+    /* ─────────────────────────────────────────────────────────
+       SAVE TO LIBRARY (current part → data URL)
+    ───────────────────────────────────────────────────────── */
+    function saveCustomPart() {
+        const tmp  = document.createElement('canvas');
+        tmp.width  = CANVAS_W;
+        tmp.height = CANVAS_H;
+        const tCtx = tmp.getContext('2d');
+
+        tCtx.drawImage(partCanvases[currentPartIndex], 0, 0);
+        if (outlineImages[currentPartIndex]) {
+            tCtx.drawImage(outlineImages[currentPartIndex], 0, 0, CANVAS_W, CANVAS_H);
         }
 
-        function loadLibrary() {
-            const lib = document.getElementById('saved-library');
-            lib.innerHTML = '<h3>Your Library</h3>'; // reset
-            let savedParts = JSON.parse(localStorage.getItem('savedParts')) || [];
-            
-            savedParts.forEach((partSrc, index) => {
-                let img = document.createElement('img');
-                img.src = partSrc;
-                img.className = 'draggable-item';
-                img.draggable = true;
-                img.id = 'saved-' + index;
-                img.ondragstart = drag;
-                // Add some static position so it sits in the library list nicely
-                img.style.position = 'static'; 
-                lib.appendChild(img);
-            });
+        const dataUrl = tmp.toDataURL('image/png');
+        const savedParts = JSON.parse(localStorage.getItem('savedParts') || '[]');
+        savedParts.push(dataUrl);
+        localStorage.setItem('savedParts', JSON.stringify(savedParts));
+        alert('Saved to Library!');
+    }
+
+    function loadLibrary() {
+        const lib = document.getElementById('saved-library');
+        lib.innerHTML = '<h3>Your Library</h3>';
+        const savedParts = JSON.parse(localStorage.getItem('savedParts') || '[]');
+
+        savedParts.forEach((src, index) => {
+            const img = document.createElement('img');
+            img.src       = src;
+            img.className = 'draggable-item';
+            img.draggable = true;
+            img.id        = 'saved-' + index;
+            img.ondragstart = drag;
+            img.style.position = 'static';
+            lib.appendChild(img);
+        });
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       MODE SWITCHING
+    ───────────────────────────────────────────────────────── */
+    function switchMode(mode) {
+        document.getElementById('draw-mode').classList.remove('active-mode');
+        document.getElementById('build-mode').classList.remove('active-mode');
+        document.getElementById(`${mode}-mode`).classList.add('active-mode');
+        if (mode === 'build') loadLibrary();
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       BUILD MODE: DRAG & DROP
+    ───────────────────────────────────────────────────────── */
+    function allowDrop(ev) { ev.preventDefault(); }
+
+    function drag(ev) {
+        ev.dataTransfer.setData('text', ev.target.id);
+        const rect = ev.target.getBoundingClientRect();
+        ev.dataTransfer.setData('offsetX', ev.clientX - rect.left);
+        ev.dataTransfer.setData('offsetY', ev.clientY - rect.top);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        const id       = ev.dataTransfer.getData('text');
+        const original = document.getElementById(id);
+
+        let el = original;
+        if (original.parentElement.id !== 'drop-zone') {
+            el    = original.cloneNode(true);
+            el.id = id + '-clone-' + Math.random();
         }
 
-        // --- Build Mode: Drag and Drop Logic ---
-        function allowDrop(ev) {
-            ev.preventDefault();
-        }
+        const zoneRect = document.getElementById('drop-zone').getBoundingClientRect();
+        el.style.position = 'absolute';
+        el.style.left = (ev.clientX - zoneRect.left  - parseInt(ev.dataTransfer.getData('offsetX'))) + 'px';
+        el.style.top  = (ev.clientY - zoneRect.top   - parseInt(ev.dataTransfer.getData('offsetY'))) + 'px';
+        el.onclick = function () { this.style.zIndex = Date.now(); };
 
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
-            // Calculate where on the image the user clicked to prevent jumping when dropped
-            const rect = ev.target.getBoundingClientRect();
-            ev.dataTransfer.setData("offsetX", ev.clientX - rect.left);
-            ev.dataTransfer.setData("offsetY", ev.clientY - rect.top);
-        }
+        ev.target.appendChild(el);
+        saveBuildState();
+    }
 
-        function drop(ev) {
-            ev.preventDefault();
-            const data = ev.dataTransfer.getData("text");
-            const draggedElement = document.getElementById(data);
-            
-            // If dragging from library/blocks, clone it so we don't lose the original
-            let elementToAppend = draggedElement;
-            if (draggedElement.parentElement.id !== 'drop-zone') {
-                elementToAppend = draggedElement.cloneNode(true);
-                elementToAppend.id = data + '-clone-' + Math.random(); // unique ID
-            }
+    function yeetAll() {
+        document.getElementById('drop-zone').innerHTML = '';
+        localStorage.removeItem('buildState');
+    }
 
-            // Adjust position based on drop coordinates
-            const dropZoneRect = document.getElementById('drop-zone').getBoundingClientRect();
-            const offsetX = parseInt(ev.dataTransfer.getData("offsetX"));
-            const offsetY = parseInt(ev.dataTransfer.getData("offsetY"));
+    function saveBuildState() {
+        localStorage.setItem('buildState', document.getElementById('drop-zone').innerHTML);
+    }
 
-            elementToAppend.style.position = 'absolute';
-            elementToAppend.style.left = (ev.clientX - dropZoneRect.left - offsetX) + 'px';
-            elementToAppend.style.top = (ev.clientY - dropZoneRect.top - offsetY) + 'px';
-            
-            // Add interaction to bring clicked items to the front
-            elementToAppend.onclick = function() {
-                this.style.zIndex = Date.now(); 
-            };
-
-            ev.target.appendChild(elementToAppend);
-            saveBuildState();
-        }
-
-        function yeetAll() {
-            document.getElementById('drop-zone').innerHTML = '';
-            localStorage.removeItem('buildState');
-        }
-
-        function saveBuildState() {
-            // Placeholder for saving the HTML state of the drop-zone to local storage
-            const dropZoneHTML = document.getElementById('drop-zone').innerHTML;
-            localStorage.setItem('buildState', dropZoneHTML);
-        }
-
-        // Init
-        window.onload = () => {
-            loadPart('block (1).png', 'block (2).png');
-            if(localStorage.getItem('buildState')) {
-                document.getElementById('drop-zone').innerHTML = localStorage.getItem('buildState');
-            }
-        };
+    /* ─────────────────────────────────────────────────────────
+       BOOT
+    ───────────────────────────────────────────────────────── */
+    window.onload = init;
     </script>
 </body>
 </html>
