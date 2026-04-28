@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blocks Character Builder</title>
+    <title>Alt Character Builder</title>
     <style>
         /* Dark Mode & Drippy Punk Alt Aesthetic */
         body {
@@ -524,11 +524,12 @@
         savedParts.forEach((src, index) => {
             const img = document.createElement('img');
             img.src       = src;
-            img.className = 'draggable-item';
+            img.className = 'shape-item draggable-item';
             img.draggable = true;
             img.id        = 'saved-' + index;
-            img.ondragstart = drag;
+            img.setAttribute('ondragstart', 'drag(event)'); // attribute survives cloneNode
             img.style.position = 'static';
+            img.style.width    = '100%';
             lib.appendChild(img);
         });
     }
@@ -577,7 +578,7 @@
         el.style.top  = (ev.clientY - zoneRect.top   - parseInt(ev.dataTransfer.getData('offsetY'))) + 'px';
         el.onclick = function () { this.style.zIndex = Date.now(); };
 
-        ev.target.appendChild(el);
+        document.getElementById('drop-zone').appendChild(el);
         saveBuildState();
     }
 
