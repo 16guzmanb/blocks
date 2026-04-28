@@ -123,6 +123,30 @@
             position: absolute;
         }
 
+        /* Shape/hat tiles in the panel — static layout, not absolute */
+        .shape-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.1s, filter 0.1s;
+            position: static;
+            width: auto;
+        }
+        .shape-item:hover { transform: scale(1.1); filter: drop-shadow(0 0 6px #ff00ff); }
+        .shape-item svg   { display: block; }
+
+        .section-label {
+            font-size: 10px;
+            letter-spacing: 1px;
+            color: #888;
+            text-transform: uppercase;
+            margin: 6px 0 2px;
+            border-top: 1px solid #333;
+            padding-top: 6px;
+        }
+
         img { max-width: 100%; height: auto; }
     </style>
 </head>
@@ -155,8 +179,10 @@
 
         <div class="tools-panel">
             <h3>Tools</h3>
-            <button class="tool-btn active" data-tool="draw" onclick="setTool('draw')">Brush</button>
-            <button class="tool-btn"        data-tool="fill" onclick="setTool('fill')">Paint Bucket</button>
+            <button class="tool-btn active" data-tool="draw"   onclick="setTool('draw')">Brush</button>
+            <button class="tool-btn"        data-tool="fill"   onclick="setTool('fill')">Paint Bucket</button>
+            <button class="tool-btn"        data-tool="eraser" onclick="setTool('eraser')">Eraser</button>
+            <button onclick="clearCurrentPart()" style="border-color:#ff4444;color:#ff4444;margin-top:4px;">Clear Part</button>
 
             <h3>Palette</h3>
             <div class="palette">
@@ -172,7 +198,7 @@
                 <div class="color-swatch"        style="background:#000000; border-color:#444;" onclick="setColor('#000000',this)"></div>
             </div>
 
-            <button onclick="saveCustomPart()" style="margin-top:20px;">Save to Library</button>
+            <button onclick="saveCharacter()" style="margin-top:20px;">Save Character</button>
         </div>
     </div>
 
@@ -187,11 +213,99 @@
 
         <div class="shape-blocks" id="raw-blocks">
             <h3>Blocks &amp; Hats</h3>
-            <img src="block (1).png"  class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw1">
-            <img src="block (9).png"  class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw9">
-            <img src="block (11).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw11">
-            <div class="draggable-item" draggable="true" ondragstart="drag(event)" id="fedora"
-                 style="font-size:40px;text-align:center;">🎩</div>
+
+            <div class="section-label">Shapes</div>
+
+            <!-- Square -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-square">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="4" y="4" width="52" height="52" fill="#ff00ff" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <!-- Circle -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-circle">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="30" cy="30" r="26" fill="#00ffff" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <!-- Triangle -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-triangle">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="30,4 56,56 4,56" fill="#ff8800" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <!-- Diamond -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-diamond">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="30,4 56,30 30,56 4,30" fill="#8800ff" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <!-- Star -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-star">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="30,4 36,22 56,22 40,34 46,54 30,42 14,54 20,34 4,22 24,22"
+                             fill="#ffff00" stroke="#fff" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <!-- Hexagon -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-hex">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="30,4 54,17 54,43 30,56 6,43 6,17"
+                             fill="#00ff00" stroke="#fff" stroke-width="2"/>
+                </svg>
+            </div>
+            <!-- Cross / Plus -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-cross">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="22" y="4"  width="16" height="52" fill="#ff0055" stroke="#fff" stroke-width="1.5"/>
+                    <rect x="4"  y="22" width="52" height="16" fill="#ff0055" stroke="#fff" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <!-- Lightning bolt -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-bolt">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <polygon points="36,4 18,32 30,32 24,56 42,28 30,28"
+                             fill="#ffff00" stroke="#fff" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <!-- Heart -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-heart">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30 52 C30 52 6 36 6 20 A12 12 0 0 1 30 16 A12 12 0 0 1 54 20 C54 36 30 52 30 52Z"
+                          fill="#ff0055" stroke="#fff" stroke-width="1.5"/>
+                </svg>
+            </div>
+            <!-- Skull -->
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="s-skull">
+                <svg width="60" height="60" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="30" cy="24" rx="20" ry="18" fill="#eee" stroke="#555" stroke-width="1.5"/>
+                    <rect x="16" y="38" width="28" height="14" rx="3" fill="#eee" stroke="#555" stroke-width="1.5"/>
+                    <rect x="20" y="42" width="6"  height="8" rx="1" fill="#555"/>
+                    <rect x="34" y="42" width="6"  height="8" rx="1" fill="#555"/>
+                    <circle cx="22" cy="24" r="5" fill="#555"/>
+                    <circle cx="38" cy="24" r="5" fill="#555"/>
+                    <rect x="27" y="28" width="6" height="3" rx="1" fill="#555"/>
+                </svg>
+            </div>
+
+            <div class="section-label">Hats &amp; Accessories</div>
+
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-tophat"   style="font-size:40px;">🎩</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-crown"    style="font-size:40px;">👑</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-grad"     style="font-size:40px;">🎓</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-cap"      style="font-size:40px;">🧢</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-helmet"   style="font-size:40px;">⛑️</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-witch"    style="font-size:40px;">🧙</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-glasses"  style="font-size:40px;">🕶️</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-bow"      style="font-size:40px;">🎀</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-chain"    style="font-size:40px;">⛓️</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-spider"   style="font-size:40px;">🕷️</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-lightning" style="font-size:40px;">⚡</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-fire"     style="font-size:40px;">🔥</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-skull2"   style="font-size:40px;">💀</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-rose"     style="font-size:40px;">🥀</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-moon"     style="font-size:40px;">🌙</div>
+            <div class="shape-item draggable-item" draggable="true" ondragstart="drag(event)" id="h-bat"      style="font-size:40px;">🦇</div>
 
             <button onclick="yeetAll()" style="margin-top:auto;border-color:red;color:red;">Yeet Reset</button>
         </div>
@@ -327,20 +441,39 @@
     });
 
     displayCanvas.addEventListener('mousemove', (e) => {
-        if (!isDrawing || currentTool !== 'draw') return;
+        if (!isDrawing) return;
+        if (currentTool !== 'draw' && currentTool !== 'eraser') return;
 
         const pCtx = partCanvases[currentPartIndex].getContext('2d');
         pCtx.save();
-        pCtx.globalCompositeOperation = 'source-atop'; // clipped to mask shape
-        pCtx.strokeStyle = currentColor;
-        pCtx.lineWidth   = 5;
-        pCtx.lineCap     = 'round';
-        pCtx.lineJoin    = 'round';
+
+        if (currentTool === 'eraser') {
+            // destination-out punches transparent holes — erases back to the blank template colour
+            pCtx.globalCompositeOperation = 'destination-out';
+            pCtx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+            pCtx.globalCompositeOperation = 'source-atop'; // clipped to mask shape
+            pCtx.strokeStyle = currentColor;
+        }
+
+        pCtx.lineWidth = currentTool === 'eraser' ? 18 : 5;
+        pCtx.lineCap   = 'round';
+        pCtx.lineJoin  = 'round';
         pCtx.beginPath();
         pCtx.moveTo(lastX, lastY);
         pCtx.lineTo(e.offsetX, e.offsetY);
         pCtx.stroke();
         pCtx.restore();
+
+        // After erasing, re-stamp the blank template so the shape stays opaque
+        // (eraser removes colour but keeps the template pixels intact)
+        if (currentTool === 'eraser' && blankImages[currentPartIndex]) {
+            const pCtx2 = partCanvases[currentPartIndex].getContext('2d');
+            pCtx2.save();
+            pCtx2.globalCompositeOperation = 'destination-over'; // paint behind existing pixels
+            pCtx2.drawImage(blankImages[currentPartIndex], 0, 0, CANVAS_W, CANVAS_H);
+            pCtx2.restore();
+        }
 
         lastX = e.offsetX;
         lastY = e.offsetY;
@@ -351,24 +484,36 @@
     displayCanvas.addEventListener('mouseleave', () => { isDrawing = false; });
 
     /* ─────────────────────────────────────────────────────────
-       SAVE TO LIBRARY (current part → data URL)
+       CLEAR current part back to its blank template
     ───────────────────────────────────────────────────────── */
-    function saveCustomPart() {
+    function clearCurrentPart() {
+        const pCtx = partCanvases[currentPartIndex].getContext('2d');
+        pCtx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        if (blankImages[currentPartIndex]) {
+            pCtx.drawImage(blankImages[currentPartIndex], 0, 0, CANVAS_W, CANVAS_H);
+        }
+        renderAll();
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       SAVE CHARACTER — composites ALL parts + outlines into
+       one single image and pushes it to the library.
+    ───────────────────────────────────────────────────────── */
+    function saveCharacter() {
         const tmp  = document.createElement('canvas');
         tmp.width  = CANVAS_W;
         tmp.height = CANVAS_H;
         const tCtx = tmp.getContext('2d');
 
-        tCtx.drawImage(partCanvases[currentPartIndex], 0, 0);
-        if (outlineImages[currentPartIndex]) {
-            tCtx.drawImage(outlineImages[currentPartIndex], 0, 0, CANVAS_W, CANVAS_H);
-        }
+        // Paint layers: all part canvases first, then all outlines on top
+        partCanvases.forEach(pc => tCtx.drawImage(pc, 0, 0));
+        outlineImages.forEach(img => { if (img) tCtx.drawImage(img, 0, 0, CANVAS_W, CANVAS_H); });
 
-        const dataUrl = tmp.toDataURL('image/png');
+        const dataUrl   = tmp.toDataURL('image/png');
         const savedParts = JSON.parse(localStorage.getItem('savedParts') || '[]');
         savedParts.push(dataUrl);
         localStorage.setItem('savedParts', JSON.stringify(savedParts));
-        alert('Saved to Library!');
+        alert('Character saved to Library!');
     }
 
     function loadLibrary() {
@@ -423,6 +568,11 @@
 
         const zoneRect = document.getElementById('drop-zone').getBoundingClientRect();
         el.style.position = 'absolute';
+        // Shape/hat items from the panel need a fixed size once on the canvas
+        if (el.classList.contains('shape-item')) {
+            el.style.width  = 'auto';
+            el.style.height = 'auto';
+        }
         el.style.left = (ev.clientX - zoneRect.left  - parseInt(ev.dataTransfer.getData('offsetX'))) + 'px';
         el.style.top  = (ev.clientY - zoneRect.top   - parseInt(ev.dataTransfer.getData('offsetY'))) + 'px';
         el.onclick = function () { this.style.zIndex = Date.now(); };
