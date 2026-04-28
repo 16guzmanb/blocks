@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alt Character Builder</title>
+    <style>
+        /* Dark Mode & Drippy Punk Alt Aesthetic */
+        body {
+            background-color: #121212;
+            color: #ff00ff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 { text-transform: uppercase; letter-spacing: 2px; }
+
+        .nav-buttons { margin-bottom: 20px; }
+
+        button {
+            background-color: #000;
+            color: #ff00ff;
+            border: 2px solid #ff00ff;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.2s ease-in-out;
+        }
+
+        button:hover { background-color: #ff00ff; color: #000; }
+
+        /* Container Layouts */
+        .mode-container {
+            display: none; /* Hidden by default, toggled via JS */
+            width: 100%;
+            max-width: 1200px;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .active-mode { display: flex; }
+
+        /* Draw Mode Specifics */
+        .canvas-area { position: relative; width: 300px; height: 500px; border: 2px dashed #ff00ff; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; cursor: crosshair; }
+        .outline-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        
+        .tools-panel, .parts-panel {
+            background: #1e1e1e;
+            padding: 15px;
+            border: 1px solid #ff00ff;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .palette { display: flex; gap: 5px; flex-wrap: wrap; width: 120px; }
+        .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid #000; }
+        
+        /* Build Mode Specifics */
+        .library, .shape-blocks {
+            background: #1e1e1e;
+            padding: 15px;
+            border: 1px solid #ff00ff;
+            width: 200px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .play-area {
+            width: 500px;
+            height: 600px;
+            border: 3px solid #ff00ff;
+            background-color: #0a0a0a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .draggable-item {
+            width: 100px;
+            height: auto;
+            cursor: grab;
+            position: absolute; /* Allows dropping anywhere */
+        }
+
+        img { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+
+    <h1>Character Maker</h1>
+    
+    <div class="nav-buttons">
+        <button onclick="switchMode('draw')">Draw Mode</button>
+        <button onclick="switchMode('build')">Build Mode</button>
+    </div>
+
+    <div id="draw-mode" class="mode-container active-mode">
+        <div class="parts-panel">
+            <h3>Select Part</h3>
+            <button onclick="loadPart('block (1).png', 'block (2).png')">Head</button>
+            <button onclick="loadPart('block (3).png', 'block (4).png')">Left Arm</button>
+            <button onclick="loadPart('block (5).png', 'block (6).png')">Right Arm</button>
+            <button onclick="loadPart('block (7).png', 'block (8).png')">Legs</button>
+            <button onclick="loadPart('block (9).png', 'block (10).png')">Torso</button>
+        </div>
+
+        <div class="canvas-area">
+            <canvas id="drawingCanvas" width="300" height="500"></canvas>
+            <img id="outlineLayer" class="outline-overlay" src="block (2).png" alt="">
+        </div>
+
+        <div class="tools-panel">
+            <h3>Tools</h3>
+            <button onclick="setTool('draw')">Brush</button>
+            <button onclick="setTool('fill')">Paint Bucket</button>
+            
+            <h3>Palette</h3>
+            <div class="palette">
+                <div class="color-swatch" style="background: #ff00ff;" onclick="setColor('#ff00ff')"></div>
+                <div class="color-swatch" style="background: #00ffff;" onclick="setColor('#00ffff')"></div>
+                <div class="color-swatch" style="background: #ff0000;" onclick="setColor('#ff0000')"></div>
+                <div class="color-swatch" style="background: #00ff00;" onclick="setColor('#00ff00')"></div>
+                <div class="color-swatch" style="background: #ffffff;" onclick="setColor('#ffffff')"></div>
+                <div class="color-swatch" style="background: #000000;" onclick="setColor('#000000')"></div>
+            </div>
+            
+            <button onclick="saveCustomPart()" style="margin-top: 20px;">Save to Library</button>
+        </div>
+    </div>
+
+    <div id="build-mode" class="mode-container">
+        <div class="library" id="saved-library">
+            <h3>Your Library</h3>
+            </div>
+
+        <div class="play-area" id="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)">
+            </div>
+
+        <div class="shape-blocks" id="raw-blocks">
+            <h3>Blocks & Hats</h3>
+            <img src="block (1).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw1">
+            <img src="block (9).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw9">
+            <img src="block (11).png" class="draggable-item" draggable="true" ondragstart="drag(event)" id="raw11">
+            <div class="draggable-item" draggable="true" ondragstart="drag(event)" id="fedora" style="font-size: 40px; text-align:center;">🎩</div>
+            
+            <button onclick="yeetAll()" style="margin-top: auto; border-color: red; color: red;">Yeet Reset</button>
+        </div>
+    </div>
+
+    <script>
+        // --- System Logic & State ---
+        let currentTool = 'draw';
+        let currentColor = '#ff00ff';
+        let isDrawing = false;
+        
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const outlineLayer = document.getElementById('outlineLayer');
+
+        // --- View Switching ---
+        function switchMode(mode) {
+            document.getElementById('draw-mode').classList.remove('active-mode');
+            document.getElementById('build-mode').classList.remove('active-mode');
+            document.getElementById(`${mode}-mode`).classList.add('active-mode');
+            if(mode === 'build') loadLibrary();
+        }
+
+        // --- Draw Mode Logic ---
+        function loadPart(blankSrc, outlineSrc) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let img = new Image();
+            img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+            img.src = blankSrc;
+            outlineLayer.src = outlineSrc;
+        }
+
+        function setTool(tool) { currentTool = tool; }
+        function setColor(color) { currentColor = color; }
+
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            if (currentTool === 'fill') {
+                // Simplified Fill: Fills entire canvas context for now. 
+                // A true pixel-perfect flood fill requires a heavy algorithm processing ImageData.
+                ctx.fillStyle = currentColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                isDrawing = false;
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(e.offsetX, e.offsetY);
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing && currentTool === 'draw') {
+                ctx.lineTo(e.offsetX, e.offsetY);
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+
+        // --- Persistence & Library (Local Storage) ---
+        function saveCustomPart() {
+            // Merges the drawn canvas with the outline image to save as one cohesive part
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tCtx = tempCanvas.getContext('2d');
+            
+            tCtx.drawImage(canvas, 0, 0);
+            tCtx.drawImage(outlineLayer, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = tempCanvas.toDataURL('image/png');
+            let savedParts = JSON.parse(localStorage.getItem('savedParts')) || [];
+            savedParts.push(dataUrl);
+            localStorage.setItem('savedParts', JSON.stringify(savedParts));
+            alert('Saved to Library!');
+        }
+
+        function loadLibrary() {
+            const lib = document.getElementById('saved-library');
+            lib.innerHTML = '<h3>Your Library</h3>'; // reset
+            let savedParts = JSON.parse(localStorage.getItem('savedParts')) || [];
+            
+            savedParts.forEach((partSrc, index) => {
+                let img = document.createElement('img');
+                img.src = partSrc;
+                img.className = 'draggable-item';
+                img.draggable = true;
+                img.id = 'saved-' + index;
+                img.ondragstart = drag;
+                // Add some static position so it sits in the library list nicely
+                img.style.position = 'static'; 
+                lib.appendChild(img);
+            });
+        }
+
+        // --- Build Mode: Drag and Drop Logic ---
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            // Calculate where on the image the user clicked to prevent jumping when dropped
+            const rect = ev.target.getBoundingClientRect();
+            ev.dataTransfer.setData("offsetX", ev.clientX - rect.left);
+            ev.dataTransfer.setData("offsetY", ev.clientY - rect.top);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            
+            // If dragging from library/blocks, clone it so we don't lose the original
+            let elementToAppend = draggedElement;
+            if (draggedElement.parentElement.id !== 'drop-zone') {
+                elementToAppend = draggedElement.cloneNode(true);
+                elementToAppend.id = data + '-clone-' + Math.random(); // unique ID
+            }
+
+            // Adjust position based on drop coordinates
+            const dropZoneRect = document.getElementById('drop-zone').getBoundingClientRect();
+            const offsetX = parseInt(ev.dataTransfer.getData("offsetX"));
+            const offsetY = parseInt(ev.dataTransfer.getData("offsetY"));
+
+            elementToAppend.style.position = 'absolute';
+            elementToAppend.style.left = (ev.clientX - dropZoneRect.left - offsetX) + 'px';
+            elementToAppend.style.top = (ev.clientY - dropZoneRect.top - offsetY) + 'px';
+            
+            // Add interaction to bring clicked items to the front
+            elementToAppend.onclick = function() {
+                this.style.zIndex = Date.now(); 
+            };
+
+            ev.target.appendChild(elementToAppend);
+            saveBuildState();
+        }
+
+        function yeetAll() {
+            document.getElementById('drop-zone').innerHTML = '';
+            localStorage.removeItem('buildState');
+        }
+
+        function saveBuildState() {
+            // Placeholder for saving the HTML state of the drop-zone to local storage
+            const dropZoneHTML = document.getElementById('drop-zone').innerHTML;
+            localStorage.setItem('buildState', dropZoneHTML);
+        }
+
+        // Init
+        window.onload = () => {
+            loadPart('block (1).png', 'block (2).png');
+            if(localStorage.getItem('buildState')) {
+                document.getElementById('drop-zone').innerHTML = localStorage.getItem('buildState');
+            }
+        };
+    </script>
+</body>
+</html>
